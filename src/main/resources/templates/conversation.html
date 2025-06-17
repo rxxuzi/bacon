@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="${otherUser.username} + ' - Messages'">Messages</title>
+</head>
+<body>
+<div th:replace="~{layout/base :: layout(content=~{::content}, title='Messages')}">
+    <div th:fragment="content">
+        <div class="chat-page">
+            <!-- Chat Header -->
+            <div class="chat-header">
+                <div class="chat-header-left">
+                    <a href="/message" class="back-button">
+                        <i class="fas fa-arrow-left"></i>
+                    </a>
+                    <div class="chat-user-info">
+                        <div class="chat-avatar" th:style="'background-color:' + ${otherUser.color}">
+                            <span th:text="${#strings.substring(otherUser.username, 0, 1).toUpperCase()}">U</span>
+                        </div>
+                        <div class="chat-user-details">
+                            <div class="chat-username" th:text="${otherUser.username}">Username</div>
+                            <div class="chat-handle" th:text="'@' + ${otherUser.userId}">@userid</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="chat-header-actions">
+                    <a th:href="@{/u/{userId}(userId=${otherUser.userId})}" class="chat-action-btn">
+                        <i class="fas fa-user"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Chat Messages -->
+            <div class="chat-messages" id="chatMessages">
+                <div th:if="${!#lists.isEmpty(messages)}" class="messages-list">
+                    <div th:each="msg : ${messages}"
+                         class="message-wrapper"
+                         th:classappend="${msg.senderId == user.id} ? 'sent' : 'received'">
+                        <div class="message-bubble">
+                            <div class="message-content" th:text="${msg.content}">Message content</div>
+                            <div class="message-time" th:text="${#temporals.format(msg.createdAt, 'h:mm a')}">Time</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Empty State -->
+                <div th:if="${#lists.isEmpty(messages)}" class="empty-chat">
+                    <div class="empty-chat-icon">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <h3>Start a conversation!</h3>
+                    <p>Send your first message to <span th:text="${otherUser.username}">Username</span></p>
+                </div>
+            </div>
+
+            <!-- Chat Input -->
+            <div class="chat-input-container">
+                <div class="chat-input-wrapper">
+                    <input type="hidden" id="receiverId" th:value="${otherUser.id}">
+                    <input type="text" id="messageContent" class="chat-input"
+                           placeholder="Type a message..."
+                           onkeypress="if(event.keyCode==13) sendMessage()">
+                    <button class="send-button" onclick="sendMessage()">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function sendMessage() {
+    const content = document.getElementById('messageContent').value.trim();
+    const receiverId = document.getElementById('receiverId').value;
+    
+    if (!content) return;
+    
+    // Add visual feedback
+    const sendButton = document.querySelector('.send-button');
+    sendButton.disabled = true;
+    sendButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    
+    fetch('/message/send', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `content=${encodeURIComponent(content)}&receiverId=${receiverId}`
+    })
+    .then(response => response.text())
+    .then(data => {
+        if (data === 'success') {
+            window.location.reload();
+        } else {
+            alert('Failed to send message. Please try again.');
+            sendButton.disabled = false;
+            sendButton.innerHTML = '<i class="fas fa-paper-plane"></i>';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to send message. Please try again.');
+        sendButton.disabled = false;
+        sendButton.innerHTML = '<i class="fas fa-paper-plane"></i>';
+    });
+}
+
+// Auto-scroll to bottom of messages
+document.addEventListener('DOMContentLoaded', function() {
+    const chatMessages = document.getElementById('chatMessages');
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Messages - Bacon</title>
+</head>
+<body>
+<div th:replace="~{layout/base :: layout(title='Messages', content=~{::content})}">
+    <div th:fragment="content">
+        <div class="messages-page">
+            <!-- Messages Header -->
+            <div class="messages-header">
+                <h1>
+                    <i class="fas fa-envelope"></i>
+                    Messages
+                </h1>
+                <p>Your conversations</p>
+            </div>
+
+            <!-- Conversations List -->
+            <div class="conversations-container">
+                <div th:if="${!#lists.isEmpty(conversations)}" class="conversations-list">
+                    <a th:each="msg : ${conversations}"
+                       th:href="@{/message/{userId}(userId=${msg.senderId == user.id ? msg.receiver.userId : msg.sender.userId})}"
+                       class="conversation-item">
+                        <div class="conversation-avatar"
+                             th:style="'background-color:' + ${msg.senderId == user.id ? msg.receiver.color : msg.sender.color}">
+                            <span th:text="${msg.senderId == user.id ? #strings.substring(msg.receiver.username, 0, 1).toUpperCase() : #strings.substring(msg.sender.username, 0, 1).toUpperCase()}">U</span>
+                        </div>
+                        <div class="conversation-content">
+                            <div class="conversation-header">
+                                <span class="conversation-name"
+                                     th:text="${msg.senderId == user.id ? msg.receiver.username : msg.sender.username}">Username</span>
+                                <span class="conversation-handle"
+                                     th:text="'@' + ${msg.senderId == user.id ? msg.receiver.userId : msg.sender.userId}">@userid</span>
+                            </div>
+                            <div class="conversation-preview" th:text="${msg.content}">Message preview...</div>
+                        </div>
+                        <div class="conversation-meta">
+                            <time class="conversation-time" th:text="${#temporals.format(msg.createdAt, 'MMM d')}">Date</time>
+                            <i class="fas fa-chevron-right conversation-arrow"></i>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Empty State -->
+                <div th:if="${#lists.isEmpty(conversations)}" class="empty-conversations">
+                    <div class="empty-icon">
+                        <i class="fas fa-envelope-open"></i>
+                    </div>
+                    <h3>No conversations yet</h3>
+                    <p>Start messaging by visiting someone's profile and clicking the message button.</p>
+                    <a href="/search" class="btn-explore">
+                        <i class="fas fa-search"></i>
+                        Find People
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

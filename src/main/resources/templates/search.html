@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Search - Bacon</title>
+</head>
+<body>
+<div th:replace="~{layout/base :: layout(title='Search', content=~{::content})}">
+    <div th:fragment="content">
+        <div class="search-page">
+            <!-- Simple Google-like Search -->
+            <div th:if="${query == null or query == ''}" class="search-home">
+                <div class="search-logo">
+                    <i class="fas fa-bacon"></i>
+                    <h2>Search</h2>
+                </div>
+                <p>Discover Bacon & Users</p>
+                
+                <div class="search-main-form">
+                    <form method="post" action="/search">
+                        <div class="search-main-input">
+                            <i class="fas fa-search"></i>
+                            <input type="text" name="q" placeholder="Search for users or posts..." id="searchInput">
+                            <button type="submit">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Search with Results -->
+            <div th:if="${query != null and query != ''}" class="search-results-page">
+                <div class="search-header">
+                    <form method="post" action="/search" class="search-form">
+                        <div class="search-input-wrapper">
+                            <i class="fas fa-search search-icon"></i>
+                            <input type="text" name="q" class="search-input"
+                                   placeholder="Search for users or posts..."
+                                   th:value="${query}" id="searchInput">
+                            <button type="submit" class="search-button">
+                                <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Search Results -->
+                <div class="search-results">
+                    <div class="results-header">
+                        <h3>Results for "<span th:text="${query}"></span>"</h3>
+                    </div>
+
+                <!-- Users Section -->
+                <div th:if="${users != null and !users.isEmpty()}" class="results-section">
+                    <div class="section-header">
+                        <h3>
+                            <i class="fas fa-users"></i>
+                            Users
+                        </h3>
+                    </div>
+                    <div class="users-grid">
+                        <div th:each="user : ${users}" class="user-card">
+                            <div class="user-card-avatar" th:style="'background-color:' + ${user.color}">
+                                <span th:text="${#strings.substring(user.username, 0, 1).toUpperCase()}">U</span>
+                            </div>
+                            <div class="user-card-info">
+                                <a th:href="@{/u/{userId}(userId=${user.userId})}" class="user-card-name"
+                                   th:text="${user.username}">Username</a>
+                                <span class="user-card-id" th:text="'@' + ${user.userId}">@userid</span>
+                            </div>
+                            <a th:href="@{/message/{userId}(userId=${user.userId})}" class="user-card-action">
+                                <i class="fas fa-envelope"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Posts Section -->
+                <div th:if="${posts != null and !posts.isEmpty()}" class="results-section">
+                    <div class="section-header">
+                        <h3>
+                            <i class="fas fa-file-text"></i>
+                            Posts
+                        </h3>
+                    </div>
+                    <div class="posts-grid">
+                        <article th:each="post : ${posts}" class="search-post-card" th:attr="data-post-id=${post.id}">
+                            <div class="search-post-header">
+                                <a th:href="@{/u/{userId}(userId=${post.user.userId})}" class="search-post-user">
+                                    <div class="search-post-avatar" th:style="'background-color:' + ${post.user.color}">
+                                        <span th:text="${#strings.substring(post.user.username, 0, 1).toUpperCase()}">U</span>
+                                    </div>
+                                    <div class="search-post-user-info">
+                                        <span class="search-post-username" th:text="${post.user.username}">Username</span>
+                                        <span class="search-post-userid" th:text="'@' + ${post.user.userId}">@userid</span>
+                                    </div>
+                                </a>
+                                <time class="search-post-time" th:text="${#temporals.format(post.createdAt, 'MMM d')}">Date</time>
+                            </div>
+                            
+                            <div class="search-post-content">
+                                <p th:text="${post.content}">Post content</p>
+                            </div>
+                            
+                            <div class="search-post-actions">
+                                <button class="search-post-action bookmark-btn" th:onclick="|toggleBookmark(${post.id})|">
+                                    <i class="fas fa-bookmark"></i>
+                                </button>
+                            </div>
+                        </article>
+                    </div>
+                </div>
+
+                    <!-- No Results -->
+                    <div th:if="${(users == null or #lists.isEmpty(users)) and (posts == null or #lists.isEmpty(posts))}"
+                         class="empty-results">
+                        <div class="empty-icon">
+                            <i class="fas fa-search"></i>
+                        </div>
+                        <h3>No results found</h3>
+                        <p>Try searching with different keywords</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleBookmark(postId) {
+    console.log('Bookmark toggled for post:', postId);
+}
+
+// Auto-focus search input
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput && !searchInput.value) {
+        searchInput.focus();
+    }
+});
+</script>
+</body>
+</html>

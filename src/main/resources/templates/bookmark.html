@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Bookmarks - Bacon</title>
+</head>
+<body>
+<div th:replace="~{layout/base :: layout(title='Bookmarks', content=~{::content})}">
+    <div th:fragment="content">
+        <div class="bookmarks-page">
+            <!-- Bookmarks Header -->
+            <div class="bookmarks-header">
+                <h1>
+                    <i class="fas fa-bookmark"></i>
+                    Bookmarks
+                </h1>
+                <p>Your saved posts</p>
+            </div>
+
+            <!-- Bookmarks List -->
+            <div class="bookmarks-container">
+                <div th:if="${!#lists.isEmpty(bookmarks)}" class="bookmarks-list">
+                    <div class="bookmarks-list-header">
+                        <h2>
+                            <i class="fas fa-heart"></i>
+                            Saved Posts
+                        </h2>
+                        <span class="bookmarks-count" th:text="${#lists.size(bookmarks)} + ' posts'">0 posts</span>
+                    </div>
+                    
+                    <div class="bookmarks-grid">
+                        <article th:each="bookmark : ${bookmarks}" class="bookmark-card" th:attr="data-post-id=${bookmark.post.id}">
+                            <div class="bookmark-header">
+                                <a th:href="@{/u/{userId}(userId=${bookmark.post.user.userId})}" class="bookmark-user">
+                                    <div class="bookmark-avatar" th:style="'background-color:' + ${bookmark.post.user.color}">
+                                        <span th:text="${#strings.substring(bookmark.post.user.username, 0, 1).toUpperCase()}">U</span>
+                                    </div>
+                                    <div class="bookmark-user-info">
+                                        <span class="bookmark-username" th:text="${bookmark.post.user.username}">Username</span>
+                                        <span class="bookmark-userid" th:text="'@' + ${bookmark.post.user.userId}">@userid</span>
+                                    </div>
+                                </a>
+                                <div class="bookmark-meta">
+                                    <time class="bookmark-time" th:text="${#temporals.format(bookmark.post.createdAt, 'MMM d')}">Date</time>
+                                    <button class="bookmark-remove-btn" th:onclick="|toggleBookmark(${bookmark.post.id})|">
+                                        <i class="fas fa-bookmark"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="bookmark-content">
+                                <p th:text="${bookmark.post.content}">Post content</p>
+                            </div>
+                            
+                            <div class="bookmark-actions">
+                                <span class="bookmark-saved-indicator">
+                                    <i class="fas fa-bookmark"></i>
+                                    Saved
+                                </span>
+                            </div>
+                        </article>
+                    </div>
+                </div>
+
+                <!-- Empty State -->
+                <div th:if="${#lists.isEmpty(bookmarks)}" class="empty-bookmarks">
+                    <div class="empty-icon">
+                        <i class="fas fa-bookmark"></i>
+                    </div>
+                    <h3>No bookmarks yet</h3>
+                    <p>Save posts you love to read them later. Look for the bookmark icon on posts in your feed.</p>
+                    <a href="/home" class="btn-explore">
+                        <i class="fas fa-home"></i>
+                        Explore Feed
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleBookmark(postId) {
+    if (!confirm('Remove this post from your bookmarks?')) return;
+    
+    // Add visual feedback
+    const bookmarkCard = document.querySelector(`[data-post-id="${postId}"]`);
+    if (bookmarkCard) {
+        bookmarkCard.style.opacity = '0.5';
+        bookmarkCard.style.pointerEvents = 'none';
+    }
+    
+    fetch(`/bookmark/${postId}`, {
+        method: 'POST'
+    })
+    .then(response => response.text())
+    .then(data => {
+        if (data === 'success') {
+            if (bookmarkCard) {
+                bookmarkCard.remove();
+                
+                // Check if no bookmarks left
+                const remainingBookmarks = document.querySelectorAll('.bookmark-card');
+                if (remainingBookmarks.length === 0) {
+                    window.location.reload();
+                }
+            }
+        } else {
+            alert('Failed to remove bookmark.');
+            if (bookmarkCard) {
+                bookmarkCard.style.opacity = '1';
+                bookmarkCard.style.pointerEvents = 'auto';
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to remove bookmark.');
+        if (bookmarkCard) {
+            bookmarkCard.style.opacity = '1';
+            bookmarkCard.style.pointerEvents = 'auto';
+        }
+    });
+}
+</script>
+</body>
+</html>

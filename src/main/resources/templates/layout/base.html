@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:fragment="layout(title, content)">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title} ?: 'Bacon'">Bacon</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/design.css}">
+    <link rel="stylesheet" th:href="@{/css/ui.css}">
+    <link rel="stylesheet" th:href="@{/css/profile.css}">
+    <link rel="stylesheet" th:href="@{/css/post.css}">
+</head>
+<body>
+<nav class="navbar" th:if="${user != null}">
+    <div class="nav-container">
+        <a href="/home" class="nav-brand">
+            <i class="fas fa-bacon"></i>
+            Bacon
+        </a>
+        <div class="nav-menu">
+            <a href="/home" class="nav-link" th:classappend="${currentPath == '/home'} ? 'active' : ''">
+                <i class="fas fa-home"></i>
+                <span>Home</span>
+            </a>
+            <a href="/search" class="nav-link" th:classappend="${currentPath == '/search'} ? 'active' : ''">
+                <i class="fas fa-search"></i>
+                <span>Search</span>
+            </a>
+            <a href="/message" class="nav-link" th:classappend="${currentPath == '/message'} ? 'active' : ''">
+                <i class="fas fa-envelope"></i>
+                <span>Messages</span>
+            </a>
+            <a href="/bookmark" class="nav-link" th:classappend="${currentPath == '/bookmark'} ? 'active' : ''">
+                <i class="fas fa-bookmark"></i>
+                <span>Bookmarks</span>
+            </a>
+        </div>
+        <div class="nav-user">
+            <a th:href="@{/u/{userId}(userId=${user.userId})}">
+                <div class="user-avatar" th:style="'background-color:' + ${user.color}">
+                    <span th:text="${#strings.substring(user.username, 0, 1).toUpperCase()}">U</span>
+                </div>
+            </a>
+            <a href="/logout" class="nav-logout">
+                <i class="fas fa-sign-out-alt"></i>
+            </a>
+        </div>
+    </div>
+</nav>
+
+<main class="main-content" th:classappend="${user != null} ? 'with-nav' : ''">
+    <div th:replace="${content}"></div>
+</main>
+
+<script th:src="@{/js/main.js}"></script>
+</body>
+</html>

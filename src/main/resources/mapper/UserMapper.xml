@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bacon.mapper.UserMapper">
+
+    <resultMap id="UserResultMap" type="com.bacon.entity.User">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="username" column="username"/>
+        <result property="bio" column="bio"/>
+        <result property="color" column="color"/>
+        <result property="passwordHash" column="password_hash"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <select id="findById" resultMap="UserResultMap">
+        SELECT * FROM users WHERE id = #{id}
+    </select>
+
+    <select id="findByUserId" resultMap="UserResultMap">
+        SELECT * FROM users WHERE user_id = #{userId}
+    </select>
+
+    <select id="findAll" resultMap="UserResultMap">
+        SELECT * FROM users ORDER BY created_at DESC
+    </select>
+
+    <select id="searchByKeyword" resultMap="UserResultMap">
+        SELECT * FROM users
+        WHERE username LIKE CONCAT('%', #{keyword}, '%')
+           OR user_id LIKE CONCAT('%', #{keyword}, '%')
+        ORDER BY created_at DESC
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO users (user_id, username, bio, color, password_hash)
+        VALUES (#{userId}, #{username}, #{bio}, #{color}, #{passwordHash})
+    </insert>
+
+    <update id="update">
+        UPDATE users
+        SET username = #{username},
+            bio = #{bio},
+            color = #{color}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM users WHERE id = #{id}
+    </delete>
+
+</mapper>

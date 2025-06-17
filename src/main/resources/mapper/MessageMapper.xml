@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bacon.mapper.MessageMapper">
+
+    <resultMap id="MessageResultMap" type="com.bacon.entity.Message">
+        <id property="id" column="id"/>
+        <result property="senderId" column="sender_id"/>
+        <result property="receiverId" column="receiver_id"/>
+        <result property="content" column="content"/>
+        <result property="isRead" column="is_read"/>
+        <result property="visibility" column="visibility"/>
+        <result property="createdAt" column="created_at"/>
+        <association property="sender" javaType="com.bacon.entity.User">
+            <id property="id" column="s_id"/>
+            <result property="userId" column="s_user_id"/>
+            <result property="username" column="s_username"/>
+            <result property="color" column="s_color"/>
+        </association>
+        <association property="receiver" javaType="com.bacon.entity.User">
+            <id property="id" column="r_id"/>
+            <result property="userId" column="r_user_id"/>
+            <result property="username" column="r_username"/>
+            <result property="color" column="r_color"/>
+        </association>
+    </resultMap>
+
+    <select id="findById" resultMap="MessageResultMap">
+        SELECT
+            m.*,
+            s.id as s_id, s.user_id as s_user_id, s.username as s_username, s.color as s_color,
+            r.id as r_id, r.user_id as r_user_id, r.username as r_username, r.color as r_color
+        FROM messages m
+                 LEFT JOIN users s ON m.sender_id = s.id
+                 LEFT JOIN users r ON m.receiver_id = r.id
+        WHERE m.id = #{id} AND m.visibility = 'normal'
+    </select>
+
+    <select id="findConversation" resultMap="MessageResultMap">
+        SELECT
+            m.*,
+            s.id as s_id, s.user_id as s_user_id, s.username as s_username, s.color as s_color,
+            r.id as r_id, r.user_id as r_user_id, r.username as r_username, r.color as r_color
+        FROM messages m
+                 LEFT JOIN users s ON m.sender_id = s.id
+                 LEFT JOIN users r ON m.receiver_id = r.id
+        WHERE ((m.sender_id = #{userId1} AND m.receiver_id = #{userId2})
+            OR (m.sender_id = #{userId2} AND m.receiver_id = #{userId1}))
+          AND m.visibility = 'normal'
+        ORDER BY m.created_at ASC
+    </select>
+
+    <select id="findUserConversations" resultMap="MessageResultMap">
+        SELECT 
+            m.*,
+            s.id as s_id, s.user_id as s_user_id, s.username as s_username, s.color as s_color,
+            r.id as r_id, r.user_id as r_user_id, r.username as r_username, r.color as r_color
+        FROM messages m
+            LEFT JOIN users s ON m.sender_id = s.id
+            LEFT JOIN users r ON m.receiver_id = r.id
+            INNER JOIN (
+                SELECT 
+                    CASE 
+                        WHEN sender_id = #{userId} THEN receiver_id
+                        ELSE sender_id
+                    END as other_user_id,
+                    MAX(created_at) as latest_created_at
+                FROM messages
+                WHERE (sender_id = #{userId} OR receiver_id = #{userId})
+                  AND visibility = 'normal'
+                GROUP BY CASE 
+                    WHEN sender_id = #{userId} THEN receiver_id
+                    ELSE sender_id
+                END
+            ) latest ON m.created_at = latest.latest_created_at
+                AND CASE 
+                    WHEN m.sender_id = #{userId} THEN m.receiver_id
+                    ELSE m.sender_id
+                END = latest.other_user_id
+        WHERE (m.sender_id = #{userId} OR m.receiver_id = #{userId})
+          AND m.visibility = 'normal'
+        ORDER BY m.created_at DESC
+    </select>
+
+    <select id="findUnreadMessages" resultMap="MessageResultMap">
+        SELECT
+            m.*,
+            s.id as s_id, s.user_id as s_user_id, s.username as s_username, s.color as s_color,
+            r.id as r_id, r.user_id as r_user_id, r.username as r_username, r.color as r_color
+        FROM messages m
+                 LEFT JOIN users s ON m.sender_id = s.id
+                 LEFT JOIN users r ON m.receiver_id = r.id
+        WHERE m.receiver_id = #{userId}
+          AND m.is_read = false
+          AND m.visibility = 'normal'
+        ORDER BY m.created_at DESC
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO messages (sender_id, receiver_id, content, is_read, visibility)
+        VALUES (#{senderId}, #{receiverId}, #{content}, #{isRead}, #{visibility})
+    </insert>
+
+    <update id="markAsRead">
+        UPDATE messages SET is_read = true WHERE id = #{id}
+    </update>
+
+    <update id="delete">
+        UPDATE messages SET visibility = 'hidden' WHERE id = #{id}
+    </update>
+
+</mapper>

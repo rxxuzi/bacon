@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bacon.mapper.BookmarkMapper">
+
+    <resultMap id="BookmarkResultMap" type="com.bacon.entity.Bookmark">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="postId" column="post_id"/>
+        <result property="createdAt" column="created_at"/>
+        <association property="post" javaType="com.bacon.entity.Post">
+            <id property="id" column="p_id"/>
+            <result property="userId" column="p_user_id"/>
+            <result property="content" column="p_content"/>
+            <result property="visibility" column="p_visibility"/>
+            <result property="replyCount" column="p_reply_count"/>
+            <result property="createdAt" column="p_created_at"/>
+            <association property="user" javaType="com.bacon.entity.User">
+                <id property="id" column="u_id"/>
+                <result property="userId" column="u_user_id"/>
+                <result property="username" column="u_username"/>
+                <result property="color" column="u_color"/>
+            </association>
+        </association>
+    </resultMap>
+
+    <select id="findById" resultMap="BookmarkResultMap">
+        SELECT
+            b.*,
+            p.id as p_id, p.user_id as p_user_id, p.content as p_content,
+            p.visibility as p_visibility, p.reply_count as p_reply_count,
+            p.created_at as p_created_at,
+            u.id as u_id, u.user_id as u_user_id, u.username as u_username, u.color as u_color
+        FROM bookmarks b
+                 LEFT JOIN posts p ON b.post_id = p.id
+                 LEFT JOIN users u ON p.user_id = u.id
+        WHERE b.id = #{id}
+    </select>
+
+    <select id="findByUserAndPost" resultType="com.bacon.entity.Bookmark">
+        SELECT * FROM bookmarks
+        WHERE user_id = #{userId} AND post_id = #{postId}
+    </select>
+
+    <select id="findByUserId" resultMap="BookmarkResultMap">
+        SELECT
+            b.*,
+            p.id as p_id, p.user_id as p_user_id, p.content as p_content,
+            p.visibility as p_visibility, p.reply_count as p_reply_count,
+            p.created_at as p_created_at,
+            u.id as u_id, u.user_id as u_user_id, u.username as u_username, u.color as u_color
+        FROM bookmarks b
+                 LEFT JOIN posts p ON b.post_id = p.id
+                 LEFT JOIN users u ON p.user_id = u.id
+        WHERE b.user_id = #{userId} AND p.is_deleted = false
+        ORDER BY b.created_at DESC
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO bookmarks (user_id, post_id)
+        VALUES (#{userId}, #{postId})
+    </insert>
+
+    <delete id="delete">
+        DELETE FROM bookmarks WHERE id = #{id}
+    </delete>
+
+    <delete id="deleteByUserAndPost">
+        DELETE FROM bookmarks WHERE user_id = #{userId} AND post_id = #{postId}
+    </delete>
+
+</mapper>

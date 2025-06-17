@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bacon.mapper.PostMapper">
+
+    <resultMap id="PostResultMap" type="com.bacon.entity.Post">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="content" column="content"/>
+        <result property="visibility" column="visibility"/>
+        <result property="replyCount" column="reply_count"/>
+        <result property="isDeleted" column="is_deleted"/>
+        <result property="createdAt" column="created_at"/>
+        <association property="user" javaType="com.bacon.entity.User">
+            <id property="id" column="u_id"/>
+            <result property="userId" column="u_user_id"/>
+            <result property="username" column="u_username"/>
+            <result property="color" column="u_color"/>
+        </association>
+    </resultMap>
+
+    <select id="findById" resultMap="PostResultMap">
+        SELECT
+            p.*,
+            u.id as u_id,
+            u.user_id as u_user_id,
+            u.username as u_username,
+            u.color as u_color
+        FROM posts p
+                 LEFT JOIN users u ON p.user_id = u.id
+        WHERE p.id = #{id} AND p.is_deleted = false
+    </select>
+
+    <select id="findByUserId" resultMap="PostResultMap">
+        SELECT
+            p.*,
+            u.id as u_id,
+            u.user_id as u_user_id,
+            u.username as u_username,
+            u.color as u_color
+        FROM posts p
+                 LEFT JOIN users u ON p.user_id = u.id
+        WHERE p.user_id = #{userId} AND p.is_deleted = false
+        ORDER BY p.created_at DESC
+    </select>
+
+    <select id="findPublicPosts" resultMap="PostResultMap">
+        SELECT
+            p.*,
+            u.id as u_id,
+            u.user_id as u_user_id,
+            u.username as u_username,
+            u.color as u_color
+        FROM posts p
+                 LEFT JOIN users u ON p.user_id = u.id
+        WHERE p.visibility = 'public' AND p.is_deleted = false
+        ORDER BY p.created_at DESC
+            LIMIT 50
+    </select>
+
+    <select id="findTimeline" resultMap="PostResultMap">
+        SELECT
+            p.*,
+            u.id as u_id,
+            u.user_id as u_user_id,
+            u.username as u_username,
+            u.color as u_color
+        FROM posts p
+                 LEFT JOIN users u ON p.user_id = u.id
+        WHERE p.visibility = 'public' AND p.is_deleted = false
+        ORDER BY p.created_at DESC
+            LIMIT 50
+    </select>
+
+    <select id="searchByKeyword" resultMap="PostResultMap">
+        SELECT
+            p.*,
+            u.id as u_id,
+            u.user_id as u_user_id,
+            u.username as u_username,
+            u.color as u_color
+        FROM posts p
+                 LEFT JOIN users u ON p.user_id = u.id
+        WHERE p.is_deleted = false
+          AND p.visibility = 'public'
+          AND p.content LIKE CONCAT('%', #{keyword}, '%')
+        ORDER BY p.created_at DESC
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO posts (user_id, content, visibility, reply_count, is_deleted)
+        VALUES (#{userId}, #{content}, #{visibility}, #{replyCount}, #{isDeleted})
+    </insert>
+
+    <update id="update">
+        UPDATE posts
+        SET content = #{content},
+            visibility = #{visibility}
+        WHERE id = #{id}
+    </update>
+
+    <update id="delete">
+        UPDATE posts SET is_deleted = true WHERE id = #{id}
+    </update>
+
+    <update id="incrementReplyCount">
+        UPDATE posts SET reply_count = reply_count + 1 WHERE id = #{id}
+    </update>
+
+</mapper>
